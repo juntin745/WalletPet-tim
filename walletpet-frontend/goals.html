@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WalletPet — Goals &amp; Budgets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Kalam:wght@300;400;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="./shared.css">
+  <style>
+    .tab-pane {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column
+    }
+
+    .tab-pane[hidden] {
+      display: none
+    }
+
+    .gb-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .gb-panel {
+      border: 2px solid var(--ink);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .22);
+      box-shadow: 3px 3px 0 var(--ink);
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .gb-panel>form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow: auto
+    }
+
+    .goal-cards {
+      display: grid;
+      /* 確保有開啟 grid 佈局 */
+      grid-template-columns: repeat(2, 1fr) !important;
+      /* 強制改為 1:1 的兩欄設計 */
+      gap: 12px;
+      /* 增加一點間距讓畫面更透氣 */
+    }
+
+    .goal-cards .card {
+      padding: 8px;
+      overflow: hidden;
+      /* 確保內容不會飄出去 */
+      min-width: 0;
+      /* 讓容器可以正確縮小 */
+    }
+
+    .goal-cards .card:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 5px 5px 0 var(--ink)
+    }
+
+    .goal-cards .card.selected {
+      background: var(--accent-soft);
+      box-shadow: 5px 5px 0 var(--accent);
+      border-color: var(--accent);
+    }
+
+    .gb-table-host {
+      flex: 1;
+      min-height: 0;
+      border: 2px dashed var(--ink);
+      border-radius: 12px;
+      background: #fffaf2;
+      padding: 6px;
+      overflow: auto
+    }
+
+    /* 可點擊的列 + 當前選中列高亮 */
+    .gb-table-host tr {
+      cursor: pointer
+    }
+
+    .gb-table-host tr:hover td {
+      background: rgba(232, 100, 58, .08)
+    }
+
+    .gb-table-host tr.selected td {
+      background: var(--accent-soft)
+    }
+
+    /* 紅色刪除按鈕 */
+    .btn.danger {
+      background: #fff;
+      color: var(--rose);
+      border-color: var(--rose);
+      box-shadow: 2px 2px 0 var(--rose);
+    }
+
+    .btn.danger:hover {
+      background: #ffe5e5
+    }
+
+    @media (max-width: 899px) {
+
+      /* 手機版: 保留左右版型, 內容緊湊塞進一頁 */
+      .gb-grid {
+        grid-template-columns: minmax(180px, 240px) 1fr;
+        gap: 6px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .gb-panel {
+        padding: 6px;
+        gap: 8px;
+        min-height: 0
+      }
+
+      .gb-panel>form {
+        overflow-y: auto;
+        min-height: 0;
+        gap: 6px;
+        position: relative
+      }
+
+      /* form 最後一個 .row (按鈕組) sticky 在底部 */
+      .gb-panel>form>.row:last-child {
+        position: sticky;
+        bottom: 0;
+        background: rgba(255, 255, 255, .95);
+        padding: 4px 0;
+        margin-top: auto;
+        z-index: 2;
+      }
+
+      .gb-panel>form .form-spacer {
+        display: none
+      }
+
+      .gb-panel h3 {
+        font-size: 14px
+      }
+
+      .gb-table-host {
+        padding: 3px;
+        font-size: 11px
+      }
+
+      .gb-table-host th,
+      .gb-table-host td {
+        padding: 3px 4px !important
+      }
+
+      .goal-cards {
+        grid-template-columns: repeat(2, 1fr);
+        /* 手機版也維持一列兩個 */
+        gap: 8px;
+      }
+
+      .goal-cards .card {
+        padding: 5px;
+        box-shadow: 2px 2px 0 var(--ink);
+        /* 縮小陰影避免壓到下方虛線 */
+      }
+
+      .goal-cards .card h3 {
+        font-size: 13px;
+        margin-bottom: 2px
+      }
+
+      /* 修正卡片金額溢出問題 */
+      /* 2. 修正 KPI 區域 */
+      .goal-cards .card .kpi {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 4px;
+        text-align: left;
+      }
+
+      /* 1. 目前金額：大字 */
+      .goal-cards .card .kpi .n {
+        display: block !important;
+        width: 100% !important;
+        /* 使用 clamp 讓字體在小螢幕自動縮小，大螢幕維持 22px */
+        font-size: clamp(16px, 4.5vw, 22px) !important;
+        font-family: 'Kalam', cursive;
+        line-height: 1.1;
+        margin: 0 !important;
+        padding: 0 !important;
+
+        /* 極端長數字保護：如果還是塞不下，就直接強制斷行 */
+        word-break: break-all !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+      }
+
+      /* 4. 目標金額：確保一定在下一行 */
+      .goal-cards .card .kpi .l {
+        display: block !important;
+        width: 100% !important;
+        font-size: 11px !important;
+        /* 稍微縮小，對比更明顯 */
+        color: var(--muted);
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      label.field {
+        margin-bottom: 2px
+      }
+
+      label.field span {
+        font-size: 11px
+      }
+
+      .input {
+        font-size: 12px;
+        padding: 3px 6px
+      }
+
+      .t-btn {
+        font-size: 14px;
+        padding: 4px 8px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!--隱藏小視窗區-->
+  <!-- 快速新增帳戶小視窗 -->
+  <div id="quickAccountModal" class="modal-overlay"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1200; justify-content:center; align-items:center;">
+    <div
+      style="background:white; padding:24px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+      <h3 style="margin-top:0; color:var(--accent);">✨ 快速建立存款帳戶</h3>
+      <p style="font-size:14px; color:#666;">系統將為此目標自動建立一個專屬存款帳戶。</p>
+
+      <label style="display:block; margin-bottom:8px; font-weight:bold;">帳戶名稱：</label>
+      <input type="text" id="quickAccountName" class="form-control"
+        style="width:100%; padding:10px; margin-bottom:20px; border:2px solid var(--ink); border-radius:8px;"
+        placeholder="例如：日本旅遊基金">
+
+      <div class="row" style="gap:12px; display:flex;">
+        <button id="quickAccountConfirmBtn" class="btn primary" style="flex:1; padding:10px;">確認建立</button>
+        <button id="quickAccountCancelBtn" class="btn" style="flex:1; padding:10px;">取消</button>
+      </div>
+    </div>
+  </div>
+  <div id="depositModal" class="modal-overlay"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; justify-content:center; align-items:center;">
+    <div
+      style="background:white; padding:24px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+      <h3 style="margin-top:0; color:#2d5a27;">💰 存入資金</h3>
+      <p id="depositGoalName" style="font-weight:bold; color:#2d5a27; margin-bottom:16px;"></p>
+
+      <label style="display:block; margin-bottom:8px; font-weight:bold;">1. 選擇來源帳戶：</label>
+      <select id="depositFromAccountSelect" class="form-control" style="width:100%; padding:8px; margin-bottom:16px;">
+      </select>
+
+      <label style="display:block; margin-bottom:8px; font-weight:bold;">2. 輸入存入金額：</label>
+      <input type="number" id="depositAmountInput" class="form-control"
+        style="width:100%; padding:8px; margin-bottom:20px;" placeholder="請輸入金額">
+
+      <div class="row" style="gap:12px; display:flex;">
+        <button id="depositConfirmBtn" class="btn primary" style="flex:1; padding:10px;">確認存入</button>
+        <button id="depositCancelBtn" class="btn" style="flex:1; padding:10px;">取消</button>
+      </div>
+    </div>
+  </div>
+  <div id="deleteModal" class="modal-overlay"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div
+      style="background:white; padding:24px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+      <h3 style="margin-top:0; color:#d32f2f;">🗑 結清並刪除目標</h3>
+      <p style="font-size:14px; color:#666;">刪除前，請選擇將餘額轉入哪一個帳戶：</p>
+
+      <label style="display:block; margin-bottom:8px; font-weight:bold;">轉入帳戶：</label>
+      <select id="modalToAccountSelect" class="form-control" style="width:100%; padding:8px; margin-bottom:20px;">
+      </select>
+
+      <div class="row" style="gap:12px; display:flex;">
+        <button id="modalConfirmBtn" class="btn danger" style="flex:1; padding:10px;">確認結清</button>
+        <button id="modalCancelBtn" class="btn" style="flex:1; padding:10px;">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <h1 class="page-title" data-page="goals">存款與預算</h1>
+    <p class="page-sub">目標存款 (saving_goals) 與預算控管 (budget)</p>
+
+    <div class="tab-switch">
+      <button class="t-btn active" data-tab="goals">🎯 存款</button>
+      <button class="t-btn" data-tab="budgets">💰 預算</button>
+    </div>
+
+    <!-- ============ GOALS TAB ============ -->
+    <div class="tab-pane" data-pane="goals">
+      <div class="gb-grid">
+        <!-- LEFT: goal form (new / edit) -->
+        <section class="gb-panel">
+          <h3 style="margin:0" id="goalFormTitle">新增存款目標</h3>
+          <form id="goalForm" novalidate>
+            <label class="field">
+              <span>存款名稱</span>
+              <input class="input" id="goalName" name="goalName" placeholder="e.g. 日本旅行" required />
+            </label>
+            <label class="field">
+              <span>目標金額</span>
+              <input class="input" id="goalTarget" name="targetAmount" type="number" min="1" step="1"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="120000" required />
+            </label>
+            <label class="field">
+              <span>存款帳號名稱 <small>(UNIQUE — 一帳戶僅能綁一目標)</small></span>
+              <select class="input" id="goalAccount" name="accountId" required></select>
+            </label>
+            <div class="row" style="gap:10px">
+              <label class="field" style="flex:1">
+                <span>開始時間</span>
+                <input class="input" id="goalStart" name="startDate" type="date" required />
+              </label>
+              <label class="field" style="flex:1">
+                <span>結束時間</span>
+                <input class="input" id="goalEnd" name="endDate" type="date" required />
+              </label>
+            </div>
+            <div class="form-spacer"></div>
+            <div class="row" style="gap:8px;margin-top:4px">
+              <button type="button" class="btn danger" id="goalDeleteBtn"
+                style="display:none;justify-content:center;padding:6px 12px">🗑 刪除</button>
+              <button type="button" class="btn" id="goalCancelBtn" style="flex:1;justify-content:center">取消</button>
+              <button type="submit" class="btn primary" id="goalSubmitBtn"
+                style="flex:1;justify-content:center">新增存款</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RIGHT: goal cards + table -->
+        <section class="gb-panel">
+          <div class="goal-cards" id="goalCards"></div>
+          <div class="gb-table-host">
+            <table class="wire">
+              <thead>
+                <tr>
+                  <th>存款名稱</th>
+                  <th>目標金額</th>
+                  <th>目前金額</th>
+                  <th>存款帳號名稱</th>
+                  <th>開始時間</th>
+                  <th>結束時間</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="goalTableBody">
+                <tr>
+                  <td colspan="7" style="text-align:center;color:var(--muted);padding:20px">讀取中…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="wp-pager" id="goalsPager"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ============ BUDGETS TAB ============ -->
+    <div class="tab-pane" data-pane="budgets" hidden>
+      <div class="gb-grid">
+        <!-- LEFT: budget form (new / edit) -->
+        <section class="gb-panel">
+          <h3 style="margin:0" id="budgetFormTitle">新增預算</h3>
+          <form id="budgetForm" novalidate>
+            <!-- 1. 預算名稱：改為文字輸入 input -->
+            <label class="field">
+              <span>預算名稱 (Scope)</span>
+              <input class="input" id="bdScope" name="budgetScope" type="text" placeholder="例如：五月份伙食費" required />
+            </label>
+
+            <!-- 2. 支出類型：改為隱藏欄位，固定值為 EXPENSE -->
+            <input type="hidden" id="bdTarget" name="targetType" value="EXPENSE">
+
+            <!-- 3. 分類選擇：我們會透過 JS 動態載入 EXPENSE 分類 -->
+            <label class="field">
+              <span>預算分類 <small>(僅限支出類別)</small></span>
+              <select class="input" id="bdCategory" name="categoryId" required>
+                <option value="">-- 請選擇分類 --</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>預算金額 (Amount)</span>
+              <input class="input" id="bdAmount" name="budgetAmount" type="number" min="1" step="1" placeholder="8000"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '');" required />
+            </label>
+
+            <div class="row" style="gap:10px">
+              <label class="field" style="flex:1">
+                <span>開始日期</span>
+                <input class="input" id="bdStart" name="startDate" type="date" required />
+              </label>
+
+              <label class="field" style="flex:1">
+                <span>結束日期</span>
+                <!-- 注意：input 必須放在 label 裡面，且 label 放在 row 裡面 -->
+                <input class="input" id="bdEnd" name="endDate" type="date" required />
+              </label>
+            </div>
+
+            <div class="form-spacer"></div>
+
+            <div class="row" style="gap:8px;margin-top:4px">
+              <button type="button" class="btn danger" id="budgetDeleteBtn"
+                style="display:none;justify-content:center;padding:6px 12px">🗑 刪除</button>
+              <button type="button" class="btn" id="budgetCancelBtn" style="flex:1;justify-content:center">取消</button>
+              <button type="submit" class="btn primary" id="budgetSubmitBtn"
+                style="flex:1;justify-content:center">新增預算</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RIGHT: budget cards + table -->
+        <section class="gb-panel">
+          <div class="goal-cards" id="budgetCards"></div>
+          <div class="gb-table-host">
+            <table class="wire">
+              <thead>
+                <tr>
+                  <th>預算名稱</th>
+                  <th>消費種類</th>
+                  <th>消費金額</th>
+                  <th>上限金額</th>
+                  <th>使用%數</th>
+                  <th>開始日期</th>
+                  <th>結束日期</th>
+                </tr>
+              </thead>
+              <tbody id="budgetTableBody">
+                <tr>
+                  <td colspan="7" style="text-align:center;color:var(--muted);padding:20px">讀取中…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="wp-pager" id="budgetsPager"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div data-wp-tweaks></div>
+
+  <script src="./shared.js"></script>
+  <script src="./api.js"></script>
+  <script>
+    /* ---------- 登入狀態檢查 ---------- */
+    async function checkAuth() {
+      try {
+        // 假設你的 api.js 中有提供 checkStatus 或類似檢查 session 的方法
+        // 如果沒有，通常呼叫任何一個需要權限的 API (如 list) 發現 401 也是一種方式
+        const user = await WalletPet.authApi.checkStatus();
+
+        if (!user) {
+          throw new Error("未登入");
+        }
+        // 已登入，繼續執行後續的 init()
+        init();
+      } catch (err) {
+        // 顯示訊息並跳轉
+        alert("您尚未登入，請先登入系統。");
+        // 假設你的登入頁面路徑是 login.html
+        window.location.href = "login.html";
+      }
+    }
+
+    // 將原本頁面底部的 init(); 改成執行檢查
+    /* ==============================================================
+       Goals & Budgets — 串接:
+         GET /api/saving-goals    (saving_goals table)
+         GET /api/budgets         (budget table)
+         GET /api/accounts        (account selector)
+         GET /api/categories      (budget category selector)
+    
+       SavingGoal (對齊 SQL saving_goals):
+         { savingGoalId, goalName, targetAmount, startDate, endDate,
+           userId, accountId, saved_amount? }   // saved_amount 由後端計算
+    
+       Budget (對齊 SQL budget):
+         { budgetId, userId, budgetScope, categoryId, targetType,
+           budgetAmount, startDate, endDate, usedAmount? }
+       ============================================================== */
+    const fmt = WalletPet.format;
+
+    /* ---------- demo data ---------- */
+    const demoGoals = [
+      { savingGoalid: 'g1', goalName: '🏝 日本旅行', targetAmount: 120000, saved_amount: 54600, accountId: 3, startDate: '2026-02-01', endDate: '2027-03-15' },
+      { savingGoalid: 'g2', goalName: '💻 新筆電', targetAmount: 66000, saved_amount: 48000, accountId: 4, startDate: '2026-09-01', endDate: '2026-12-01' },
+      { savingGoalid: 'g3', goalName: '🛟 緊急備用金', targetAmount: 90000, saved_amount: 21000, accountId: 5, startDate: '2026-01-01', endDate: '2026-12-31' },
+      { savingGoalid: 'g4', goalName: '🚗 汽車頭款', targetAmount: 200000, saved_amount: 76000, accountId: 6, startDate: '2026-03-01', endDate: '2027-06-30' },
+      { savingGoalid: 'g5', goalName: '📷 新相機', targetAmount: 45000, saved_amount: 18200, accountId: 7, startDate: '2026-04-01', endDate: '2026-10-31' },
+      { savingGoalid: 'g6', goalName: '💍 紀念日禮物', targetAmount: 25000, saved_amount: 22000, accountId: 8, startDate: '2026-01-15', endDate: '2026-06-15' },
+      { savingGoalid: 'g7', goalName: '🏠 裝潢基金', targetAmount: 150000, saved_amount: 32000, accountId: 9, startDate: '2026-02-15', endDate: '2027-08-31' },
+      { savingGoalid: 'g8', goalName: '📚 進修學費', targetAmount: 80000, saved_amount: 60000, accountId: 10, startDate: '2025-12-01', endDate: '2026-07-31' },
+    ];
+    const demoBudgets = [
+      { budgetId: 'b1', budgetScope: 'MONTH', targetType: 'CATEGORY', categoryId: 'ES001', budgetAmount: 8000, usedAmount: 5420, startDate: '2026-04-01', endDate: '2026-04-30' },
+      { budgetId: 'b2', budgetScope: 'MONTH', targetType: 'CATEGORY', categoryId: 'ES005', budgetAmount: 2500, usedAmount: 2900, startDate: '2026-04-01', endDate: '2026-04-30' },
+      { budgetId: 'b3', budgetScope: 'MONTH', targetType: 'TOTAL', categoryId: null, budgetAmount: 90000, usedAmount: 72540, startDate: '2026-04-01', endDate: '2026-04-30' },
+      { budgetId: 'b4', budgetScope: 'MONTH', targetType: 'CATEGORY', categoryId: 'ES004', budgetAmount: 3500, usedAmount: 1200, startDate: '2026-04-01', endDate: '2026-04-30' },
+      { budgetId: 'b5', budgetScope: 'MONTH', targetType: 'CATEGORY', categoryId: 'ES006', budgetAmount: 4000, usedAmount: 3160, startDate: '2026-04-01', endDate: '2026-04-30' },
+      { budgetId: 'b6', budgetScope: 'WEEK', targetType: 'CATEGORY', categoryId: 'ES001', budgetAmount: 2000, usedAmount: 1840, startDate: '2026-04-14', endDate: '2026-04-20' },
+      { budgetId: 'b7', budgetScope: 'WEEK', targetType: 'TOTAL', categoryId: null, budgetAmount: 20000, usedAmount: 16240, startDate: '2026-04-14', endDate: '2026-04-20' },
+      { budgetId: 'b8', budgetScope: 'CUSTOM', targetType: 'CATEGORY', categoryId: 'ES002', budgetAmount: 10000, usedAmount: 4690, startDate: '2026-04-01', endDate: '2026-06-30' },
+      { budgetId: 'b9', budgetScope: 'MONTH', targetType: 'CATEGORY', categoryId: 'ES003', budgetAmount: 20000, usedAmount: 18000, startDate: '2026-04-01', endDate: '2026-04-30' },
+    ];
+    const demoAccounts = [
+      { accountId: 3, accountName: '🏛 旅行基金帳戶' },
+      { accountId: 4, accountName: '💻 筆電基金帳戶' },
+      { accountId: 5, accountName: '🛟 緊急備用金' },
+    ];
+    const demoCategories = [
+      { categoryId: 'ES001', categoryName: '飲食', icon: '🍜', categoryType: 'EXPENSE' },
+      { categoryId: 'ES005', categoryName: '娛樂', icon: '🎬', categoryType: 'EXPENSE' },
+      { categoryId: 'ES004', categoryName: '交通', icon: '🚇', categoryType: 'EXPENSE' },
+    ];
+
+    const state = {
+      goals: [], budgets: [], accounts: [], categories: [], currentTab: 'goals',
+      editingGoalId: null,
+      editingBudgetId: null, selectedGoalId: null,
+    };
+    const goalsPager = WalletPet.createPager({ pageSize: 4 });
+    const budgetsPager = WalletPet.createPager({ pageSize: 4 });
+
+    /** 依視窗寬度動態調整 pager 每頁筆數:桌機 4 / 手機橫向 3 */
+    function adjustPagerSize() {
+      const size = window.matchMedia('(max-width: 899px)').matches ? 3 : 4;
+      goalsPager.pageSize = size;
+      budgetsPager.pageSize = size;
+    }
+    adjustPagerSize();
+    window.addEventListener('resize', () => {
+      adjustPagerSize();
+      renderGoals();
+      renderBudgets();
+    });
+
+    /* ---------- tab switching ---------- */
+    document.querySelectorAll('.t-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const tab = b.dataset.tab;
+        state.currentTab = tab;
+        document.querySelectorAll('.t-btn').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
+        document.querySelectorAll('.tab-pane').forEach(p => p.hidden = p.dataset.pane !== tab);
+      });
+    });
+
+    /* ---------- Goals rendering ---------- */
+    function renderGoals() {
+      goalsPager.setItems(state.goals);
+      const visible = goalsPager.visible();
+
+      const cards = visible.map(g => {
+        const ratio = g.targetAmount ? g.account.balance / g.targetAmount : 0;
+        const pct = Math.min(ratio, 1.2);
+        const sel = g.savingGoalid === state.editingGoalId ? ' selected' : '';
+        return `<div class="card${sel}" data-goal-id="${g.savingGoalid}">
+      <h3>${g.goalName}</h3>
+      <div class="kpi">
+      <span class="n">${fmt.money(g.account.balance)}</span>
+      <span class="l" style="display: block; width: 100%;">/ ${fmt.money(g.targetAmount)}</span>
+      </div>
+      <div class="bar${ratio > 1 ? ' over' : ''}"><i style="width:${(pct * 100).toFixed(0)}%"></i></div>
+      <div class="mini-stat"><span>${fmt.percent(ratio)}</span><span>→ ${fmt.date(g.endDate)}</span></div>
+      </div>`;
+      }).join('');
+      document.getElementById('goalCards').innerHTML = cards ||
+        '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">尚未建立任何目標</div>';
+
+      const rows = visible.map(g => {
+        const sel = g.savingGoalid === state.editingGoalId ? ' class="selected"' : '';
+
+        // 判斷是否已結算
+        const isCompleted = g.status === 'COMPLETED';
+
+        // --- 資料切換邏輯 ---
+        const displayAmount = isCompleted ? g.finalAmount : g.account.balance;
+        const displayAccount = isCompleted
+          ? (g.finalAccountName || '已結算帳戶')
+          : (g.account ? g.account.accountName : `#${g.accountId}`);
+
+        // --- 前台計算百分比 ---
+        // 邏輯：(已存 / 目標) * 100，若目標為 0 則給 0，最高不鎖死（可以看到超額達成）
+        const ratio = g.targetAmount > 0 ? (displayAmount / g.targetAmount) * 100 : 0;
+        const pctString = ratio.toFixed(1) + '%'; // 保留一位小數
+
+        return `<tr${sel} data-goal-id="${g.savingGoalid}">
+    <td>
+      <div style="font-weight:bold">${g.goalName}</div>
+      <div style="font-size:12px; color:var(--muted)">
+        ${pctString} ${isCompleted ? '<span style="color:#28a745"> (已結案)</span>' : ''}
+      </div>
+    </td>
+    <td>${fmt.money(g.targetAmount)}</td>
+    <td style="font-weight:bold; color:${isCompleted ? '#28a745' : 'inherit'}">
+      ${fmt.money(displayAmount)}
+    </td>
+    <td title="來源帳戶" style="font-size:13px">${displayAccount}</td> 
+    <td>${fmt.date(g.startDate)}</td>
+    <td>${fmt.date(g.endDate)}</td>
+    <td style="text-align:right">
+      ${!isCompleted ? `
+        <button class="btn sm success" data-deposit="${g.savingGoalid}">+ 存入</button>
+        <button class="btn sm primary" data-complete="${g.savingGoalid}" style="margin-left:4px">🏁 完成</button>
+      ` : `<span style="color:var(--muted); font-size:12px">已結算</span>`}
+    </td>
+  </tr>`;
+      }).join('');
+      document.getElementById('goalTableBody').innerHTML = rows ||
+        '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">無目標</td></tr>';
+
+      goalsPager.renderInto('goalsPager', renderGoals);
+    }
+
+    /* ---------- Budgets rendering ---------- */
+    function lookupCategory(id) { return state.categories.find(c => c.categoryId === id); }
+
+    function renderBudgets() {
+      budgetsPager.setItems(state.budgets);
+      const visible = budgetsPager.visible();
+
+      // 1. 處理上方卡片區 (Cards)
+      const cards = visible.map(result => {
+        const b = result.budget;
+        if (!b) return ''; // 安全檢查
+
+        // 【修正點】：現在優先顯示我們自定義的「預算名稱 (budgetScope)」
+        const title = b.budgetScope || (result.categoryName ? result.categoryName : '未命名預算');
+        const over = result.progress > 1;
+
+        return `
+    <div class="card" data-budget-id="${b.budgetId}" onclick="loadBudgetToForm('${b.budgetId}')" style="cursor: pointer;">
+      <h3>${title}</h3>
+      <div class="kpi">
+        <span class="n">${fmt.money(result.currentSpent)}</span>
+        <span class="l">/ ${fmt.money(b.budgetAmount)}</span>
+      </div>
+      <div class="bar stripe${over ? ' over' : ''}">
+        <i style="width:${(Math.min(result.progress, 1) * 100).toFixed(0)}%"></i>
+      </div>
+      <div class="mini-stat">
+        <span>${(result.progress * 100).toFixed(1)}%</span>
+        <span>→ ${fmt.date(b.endDate)}</span>
+      </div>
+    </div>`;
+      }).join('');
+
+      const cardContainer = document.getElementById('budgetCards');
+      if (cardContainer) {
+        cardContainer.innerHTML = cards || '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">尚未建立任何預算</div>';
+      }
+
+      // 2. 處理下方表格區 (Rows)
+      const rows = visible.map(result => {
+        const b = result.budget;
+        if (!b) return '';
+
+        // 按照你規劃的順序，移除所有關於 TOTAL 的判斷
+        return `
+    <tr onclick="loadBudgetToForm('${b.budgetId}')" style="cursor: pointer;">
+      <!-- 1. 預算名稱：顯示自定義名稱 -->
+      <td>${b.budgetScope || '未命名'}</td>
+      
+      <!-- 2. 分類名稱：直接顯示後端給的 categoryName -->
+      <td>${result.categoryName || '未設定'}</td>
+      
+      <!-- 3. 目前使用金額 -->
+      <td>${fmt.money(result.currentSpent)}</td>
+      
+      <!-- 4. 預算金額 -->
+      <td>${fmt.money(b.budgetAmount)}</td>
+      
+      <!-- 5. 使用百分比 -->
+      <td>${(result.progress * 100).toFixed(1)}%</td>
+      
+      <!-- 6. 開始時間 -->
+      <td>${fmt.date(b.startDate)}</td>
+      
+      <!-- 7. 結束時間 -->
+      <td>${fmt.date(b.endDate)}</td>
+    </tr>`;
+      }).join('');
+
+      const tableBody = document.getElementById('budgetTableBody');
+      if (tableBody) {
+        tableBody.innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">無預算</td></tr>';
+      }
+
+      budgetsPager.renderInto('budgetsPager', renderBudgets);
+    }
+    /* ---------- populate selects ---------- */
+    function populateAccountSelect() {
+      document.getElementById('goalAccount').innerHTML = state.accounts
+        .map(a => `<option value="${a.accountId}">#${a.accountId} ${a.accountName}</option>`)
+        .join('');
+    }
+    function populateBudgetCategorySelect() {
+      const expenseCats = state.categories.filter(c => c.categoryType === 'EXPENSE');
+
+      // 加上一個空白選項，避免使用者沒選就直接送出第一個
+      const defaultOption = '<option value="">-- 請選擇分類 --</option>';
+
+      document.getElementById('bdCategory').innerHTML = defaultOption + expenseCats
+        .map(c => `<option value="${c.categoryId}">${c.icon || ''} ${c.categoryName}</option>`)
+        .join('');
+    }
+
+    /* ========================================================
+       Goal form: new / edit / delete
+       ======================================================== */
+    document.getElementById('quickAccountConfirmBtn').addEventListener('click', async () => {
+      const accName = document.getElementById('quickAccountName').value.trim();
+
+      if (!accName) {
+        alert("請輸入帳戶名稱");
+        return;
+      }
+
+      // 依照你同學的 API 格式預設好參數
+      const requestBody = {
+        accountName: accName,
+        initialBalance: 0,        // 金額預設 0
+        isLiability: false,      // 不是負債
+        isSavingAccount: true    // 標記為存款帳戶
+      };
+
+      try {
+        // 1. 呼叫 API 新增帳戶
+        const response = await WalletPet.accountApi.create(requestBody);
+        const newAccount = response;
+
+        alert("帳戶建立成功！");
+        document.getElementById('quickAccountModal').style.display = 'none';
+
+        // 2. 重新執行 loadSavingAccountsOnly 刷新下拉選單
+        // 注意：我們需要等它 await 完，選單裡面才有新的資料
+        await loadSavingAccountsOnly();
+
+        // 3. 自動幫使用者選中剛剛建立的這個 ID
+        const select = document.getElementById('goalAccount');
+        select.value = newAccount.accountId;
+
+      } catch (ex) {
+        console.error("快速新增帳戶失敗", ex);
+        alert("建立失敗：" + (ex.message || "請檢查後端連線"));
+      }
+    });
+    document.getElementById('goalAccount').addEventListener('change', (e) => {
+      if (e.target.value === 'NEW_ACCOUNT_TRIGGER') {
+        // 立即清空選擇，避免表單以為選中了這個特殊標籤
+        e.target.value = "";
+
+        // 觸發你的小視窗（等你的元素）
+        openNewAccountModal();
+      }
+    });
+    function openNewAccountModal() {
+      const modal = document.getElementById('quickAccountModal');
+      const quickInput = document.getElementById('quickAccountName');
+      const goalNameInput = document.getElementById('goalName');
+
+      // 預設填入跟 Goal Name 一樣的字，如果沒填就空白
+      quickInput.value = goalNameInput.value.trim();
+
+      modal.style.display = 'flex';
+      quickInput.focus(); // 自動聚焦方便輸入
+    }
+
+    // 點擊取消關閉
+    document.getElementById('quickAccountCancelBtn').addEventListener('click', () => {
+      document.getElementById('quickAccountModal').style.display = 'none';
+    });
+
+    function enterGoalEditMode(g) {
+      state.editingGoalId = g.savingGoalid;
+      document.getElementById('goalFormTitle').textContent = '編輯目標: ' + g.goalName;
+
+      // --- 可編輯欄位 ---
+      document.getElementById('goalName').value = g.goalName;
+      document.getElementById('goalTarget').value = g.targetAmount;
+
+      // --- 鎖定欄位 (禁用與唯讀) ---
+      const accSel = document.getElementById('goalAccount');
+      accSel.value = g.accountId;
+      accSel.disabled = true; // 鎖定帳戶不可改
+
+      const startInput = document.getElementById('goalStart');
+      const endInput = document.getElementById('goalEnd');
+      startInput.value = g.startDate;
+      endInput.value = g.endDate;
+      startInput.readOnly = true; // 鎖定日期
+      endInput.readOnly = true;
+
+      // 按鈕切換
+      document.getElementById('goalSubmitBtn').textContent = '確認修改存款';
+      document.getElementById('goalDeleteBtn').style.display = 'inline-flex';
+
+      renderGoals(); // 讓選中的卡片高亮
+    }
+
+    function resetGoalForm() {
+      state.editingGoalId = null;
+      document.getElementById('goalFormTitle').textContent = 'New goal';
+      document.getElementById('goalForm').reset();
+
+      // --- 解鎖所有欄位 ---
+      document.getElementById('goalAccount').disabled = false;
+      document.getElementById('goalStart').readOnly = false;
+      document.getElementById('goalEnd').readOnly = false;
+
+      document.getElementById('goalStart').value = fmt.today();
+      document.getElementById('goalSubmitBtn').textContent = 'Save goal';
+      document.getElementById('goalDeleteBtn').style.display = 'none';
+      renderGoals();
+    }
+
+    /* 點 card 或 row 進入 edit mode */
+    document.getElementById('goalTableBody').addEventListener('click', async e => {
+      // --- 判斷 1: 處理「存入」按鈕 ---
+      const depositBtn = e.target.closest('[data-deposit]');
+
+      if (depositBtn) {
+        const goalId = depositBtn.getAttribute('data-deposit');
+        const g = state.goals.find(x => String(x.savingGoalid) === goalId);
+
+        if (g) {
+          // 1. 設定標題
+          document.getElementById('depositGoalName').innerText = `目標：${g.goalName}`;
+          state.selectedGoalId = g.savingGoalid; // 暫存目標 ID
+
+          // 2. 餵食「非負債」帳戶資料到選單 (借用你的過濾邏輯)
+          const select = document.getElementById('depositFromAccountSelect');
+          const validAccounts = state.accounts.filter(acc => {
+            // 1. 排除負債 (LIABILITY / CREDIT_CARD)
+            const isNotDebt = acc.accountCategory !== 'LIABILITY' && acc.accountCategory !== 'CREDIT_CARD';
+
+            // 2. 排除存款目標帳戶 (這裡要看你帳戶資料裡，標記它是「目標帳戶」的欄位是什麼)
+            // 假設你的存款帳戶 category 叫 'GOAL' 或 'SAVING_GOAL'
+            const isNotGoal = acc.accountCategory !== 'GOAL' && acc.accountCategory !== 'SAVING_GOAL';
+
+            return isNotDebt && isNotGoal;
+          });
+
+          select.innerHTML = validAccounts.map(acc =>
+            `<option value="${acc.accountId}">${acc.accountName} ($${acc.balance})</option>`
+          ).join('');
+
+          // 3. 顯示視窗
+          document.getElementById('depositModal').style.display = 'flex';
+        }
+        return;
+      }
+      // --- 判斷 2: 處理「完成」按鈕 ---
+      const completeBtn = e.target.closest('[data-complete]');
+      if (completeBtn) {
+        const goalId = completeBtn.getAttribute('data-complete');
+        if (confirm("確定要完成此目標並解鎖帳戶嗎？")) {
+          try {
+            await WalletPet.savingGoalApi.complete(goalId);
+            alert("恭喜達成目標！");
+            init(); // 刷新畫面
+          } catch (ex) {
+            alert("結算失敗，請稍後再試。");
+          }
+        }
+        return;
+      }
+
+      // 2. 原本的「進入編輯模式」邏輯
+      const tr = e.target.closest('tr[data-goal-id]');
+      if (!tr) return;
+      const g = state.goals.find(x => String(x.savingGoalid) === tr.dataset.goalId);
+      if (g) enterGoalEditMode(g);
+    });
+
+    /* Cancel */
+    document.getElementById('goalCancelBtn').addEventListener('click', resetGoalForm);
+
+    /* Delete */
+    /* 1. 存款目標刪除按鈕：點擊後打開結清視窗 */
+    document.getElementById('goalDeleteBtn').addEventListener('click', () => {
+      if (!state.editingGoalId) return; // 沒選中就不動
+
+      const g = state.goals.find(x => String(x.savingGoalid) === String(state.editingGoalId));
+
+      // 準備結清視窗的選單
+      const modalSelect = document.getElementById('modalToAccountSelect');
+      modalSelect.innerHTML = state.accounts
+        .filter(acc => acc.accountId !== (g ? g.accountId : null))
+        .map(acc => `<option value="${acc.accountId}">${acc.accountName}</option>`)
+        .join('');
+
+      // 秀出你 HTML 裡寫好的那個 deleteModal
+      document.getElementById('deleteModal').style.display = 'flex';
+    });
+
+    /* 2. 結清視窗的取消按鈕：點擊後關閉視窗 */
+    document.getElementById('modalCancelBtn').addEventListener('click', () => {
+      document.getElementById('deleteModal').style.display = 'none';
+    });
+
+
+    /* 當點擊原本表單裡的 🗑 刪除按鈕 */
+    document.getElementById('budgetDeleteBtn').addEventListener('click', async () => {
+      // 1. 邏輯檢查：確保知道現在要刪哪一筆
+      if (!state.editingBudgetId) return;
+
+      // 2. 找出這筆預算的資料（為了顯示名稱給使用者確認）
+      const result = state.budgets.find(x => String(x.budget.budgetId) === String(state.editingBudgetId));
+      if (!result) return;
+
+      const b = result.budget;
+      const label = b.budgetScope || result.categoryName || "這筆預算";
+
+      // 3. 使用者二次確認，避免手滑
+      if (!confirm(`確認刪除預算「${label}」? 此操作無法復原。`)) return;
+
+      try {
+        console.log("1. 開始刪除預算，ID:", state.editingBudgetId);
+
+        // 4. 呼叫後端 API (根據你 api.js 的定義，通常是 WalletPet.budgetApi.delete 或 remove)
+        // 注意：如果是你同學寫的，請確認是 .remove 還是 .delete
+        await WalletPet.budgetApi.remove(state.editingBudgetId);
+
+        alert("刪除成功！");
+
+        // 5. 關鍵同步：重置表單並刷新畫面
+        resetBudgetForm(); // 清空左側輸入框並隱藏刪除按鈕
+        await init();      // 叫大總管重新抓資料並畫出右側進度條
+
+        console.log("2. 刪除後刷新完畢！");
+
+      } catch (ex) {
+        console.error("刪除失敗：", ex);
+        alert("刪除失敗，請檢查後端服務是否正常。");
+      }
+    });
+    /* 小視窗裡的「確認結清」：這才是真正的關鍵 */
+    document.getElementById('modalConfirmBtn').addEventListener('click', async () => {
+      const toAccountId = document.getElementById('modalToAccountSelect').value;
+
+      try {
+        // 呼叫 API，傳入 ID 和你剛剛選的帳戶 ID
+        await WalletPet.savingGoalApi.remove(state.editingGoalId, toAccountId);
+
+        alert("結清並刪除成功！");
+        document.getElementById('deleteModal').style.display = 'none';
+
+        // 重新抓取資料更新列表
+        init();
+        resetGoalForm();
+      } catch (ex) {
+        alert("刪除失敗，請確認後端連線。");
+      }
+    });
+
+
+    document.getElementById('depositCancelBtn').addEventListener('click', () => {
+      document.getElementById('depositModal').style.display = 'none';
+      document.getElementById('depositAmountInput').value = ''; // 清空，下次才不會看到舊數字
+    });
+
+    /* 存入視窗的「確認」按鈕 */
+    document.getElementById('depositConfirmBtn').addEventListener('click', async () => {
+      // 只有金額需要轉數字，因為要檢查是否大於 0
+      const amount = Number(document.getElementById('depositAmountInput').value);
+
+      // 帳戶 ID 和 目標 ID 直接維持原樣（字串就字串）
+      const fromAccountId = document.getElementById('depositFromAccountSelect').value;
+      const goalId = state.selectedGoalId;
+
+      console.log("這次發出去的 ID 是：", goalId); // 檢查這行印出來是不是你要的 "g1" 之類的
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("請輸入有效的存入金額");
+        return;
+      }
+
+      // 這裡不要檢查 isNaN(goalId) 了，因為你的 ID 可能是 "g1"
+      if (!goalId) {
+        alert("程式錯誤：找不到目標 ID");
+        return;
+      }
+
+      try {
+        // 照原樣傳過去
+        await WalletPet.savingGoalApi.deposit(goalId, amount, fromAccountId);
+
+        alert("存入成功！");
+        document.getElementById('depositModal').style.display = 'none';
+        init();
+      } catch (ex) {
+        console.error(ex);
+        alert("存入失敗：後端回報 " + ex.message);
+      }
+    });
+    /* Submit: create or update */
+    /* Submit: create or update */
+    document.getElementById('goalForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      try {
+        // 1. 取得目前輸入的數值 (補上這行取得 value)
+        const goalNameValue = document.getElementById('goalName').value;
+        const amount = Number(document.getElementById('goalTarget').value);
+
+        if (state.editingGoalId) {
+          // 【修改邏輯】
+          console.log("正在更新存款目標 ID:", state.editingGoalId);
+
+          const updateBody = {
+            goalName: goalNameValue, // 使用剛取得的字串值
+            targetAmount: amount
+          };
+
+          console.log("準備送出的資料：", updateBody); // 調試用
+
+          await WalletPet.savingGoalApi.update(state.editingGoalId, updateBody);
+          alert("修改成功");
+        } else {
+          // 【新增邏輯】
+          const body = {
+            goalName: goalNameValue,
+            targetAmount: amount,
+            accountId: document.getElementById('goalAccount').value,
+            startDate: document.getElementById('goalStart').value,
+            endDate: document.getElementById('goalEnd').value
+          };
+          await WalletPet.savingGoalApi.create(body);
+          alert("儲存成功");
+        }
+
+        resetGoalForm();
+        await init();
+
+      } catch (ex) {
+        console.error("操作失敗：", ex);
+        // 建議這裡顯示具體的錯誤訊息，debug 比較快
+        alert("操作失敗：" + (ex.message || "請檢查資料格式"));
+      }
+    });
+
+
+    /* ========================================================
+       Budget form: new / edit / delete
+       ======================================================== */
+    function loadBudgetToForm(budgetId) {
+      const result = state.budgets.find(x => String(x.budget.budgetId) === String(budgetId));
+      if (!result) return;
+
+      const b = result.budget;
+      state.editingBudgetId = b.budgetId;
+
+      document.getElementById('budgetFormTitle').textContent = '編輯預算: ' + b.budgetScope;
+
+      // --- 可編輯欄位 ---
+      document.getElementById('bdScope').value = b.budgetScope; // 名稱
+      document.getElementById('bdAmount').value = b.budgetAmount; // 金額
+
+      // --- 鎖定欄位 (禁用掉，不讓使用者改) ---
+      const catSel = document.getElementById('bdCategory');
+      catSel.value = b.categoryId || '';
+      catSel.disabled = true; // 鎖死分類
+
+      const startInput = document.getElementById('bdStart');
+      const endInput = document.getElementById('bdEnd');
+      startInput.value = b.startDate;
+      endInput.value = b.endDate;
+      startInput.readOnly = true; // 鎖死日期
+      endInput.readOnly = true;
+
+      // 按鈕切換
+      document.getElementById('budgetSubmitBtn').textContent = '確認修改';
+      document.getElementById('budgetDeleteBtn').style.display = 'inline-flex';
+
+      renderBudgets();
+    }
+
+    function resetBudgetForm() {
+      state.editingBudgetId = null;
+      document.getElementById('budgetFormTitle').textContent = 'New budget';
+      document.getElementById('budgetForm').reset();
+
+      // --- 解鎖欄位 ---
+      document.getElementById('bdCategory').disabled = false; // 恢復可選
+      document.getElementById('bdStart').readOnly = false;    // 恢復可填[cite: 1]
+      document.getElementById('bdEnd').readOnly = false;
+
+      document.getElementById('bdStart').value = fmt.today();
+      document.getElementById('budgetSubmitBtn').textContent = 'Save budget';
+      document.getElementById('budgetDeleteBtn').style.display = 'none';
+
+      renderBudgets();
+    }
+
+    /* 點 card 或 row 進入 edit mode */
+    document.getElementById('budgetCards').addEventListener('click', e => {
+      const card = e.target.closest('[data-budget-id]');
+      if (!card) return;
+      const b = state.budgets.find(x => String(x.budgetId) === card.dataset.budgetId);
+      if (b) loadBudgetToForm(budgetId);
+    });
+    document.getElementById('budgetTableBody').addEventListener('click', e => {
+      const tr = e.target.closest('tr[data-budget-id]');
+      if (!tr) return;
+      const b = state.budgets.find(x => String(x.budgetId) === tr.dataset.budgetId);
+      if (b) loadBudgetToForm(budgetId);
+    });
+
+    /* Cancel */
+    document.getElementById('budgetCancelBtn').addEventListener('click', resetBudgetForm);
+
+    /* Delete */
+    document.getElementById('budgetDeleteBtn').addEventListener('click', async () => {
+      if (!state.editingBudgetId) return;
+      const b = state.budgets.find(x => x.budgetId === state.editingBudgetId);
+      if (!b) return;
+      const cat = lookupCategory(b.categoryId);
+      const label = b.targetType === 'TOTAL' ? 'TOTAL' : (cat ? cat.categoryName : b.categoryId);
+      if (!confirm(`確認刪除預算「${label}」(${b.budgetScope})? 此操作無法復原。`)) return;
+      try {
+        await WalletPet.budgetApi.remove(state.editingBudgetId);
+      } catch (ex) {
+        console.warn('[budgets] 刪除失敗, 本地模擬');
+      }
+      state.budgets = state.budgets.filter(x => x.budgetId !== state.editingBudgetId);
+      resetBudgetForm();
+    });
+
+    /* Submit: create or update */
+    document.getElementById('budgetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      try {
+        const body = {
+          budgetScope: document.getElementById('bdScope').value,
+          budgetAmount: Number(document.getElementById('bdAmount').value),
+          // 雖然鎖定了，但送出時還是要把這些值帶上，或者後端 update 邏輯會只更新特定欄位
+          tempCategoryId: document.getElementById('bdCategory').value,
+          startDate: document.getElementById('bdStart').value,
+          endDate: document.getElementById('bdEnd').value,
+          targetType: 'EXPENSE'
+        };
+
+        if (state.editingBudgetId) {
+          // 【修改邏輯】
+          console.log("正在更新預算 ID:", state.editingBudgetId);
+
+          // 關鍵修正：不要傳 body 物件，直接傳金額數字進去
+          const amountOnly = Number(document.getElementById('bdAmount').value);
+          await WalletPet.budgetApi.update(state.editingBudgetId, amountOnly);
+
+          alert("修改成功");
+        } else {
+          // ... 新增邏輯維持不變，因為 create 需要完整的 body ...
+          await WalletPet.budgetApi.create(body);
+          alert("儲存成功");
+        }
+
+        resetBudgetForm();
+        await init(); // 刷新右邊區域[cite: 1]
+
+      } catch (ex) {
+        console.error("操作失敗：", ex);
+        alert("操作失敗，請檢查資料格式");
+      }
+    });
+
+    /* ---------- init ---------- */
+    async function loadSavingAccountsOnly() {
+      try {
+        const response = await WalletPet.savingGoalApi.getSavingAccounts();
+        console.log("後端回傳的原始資料：", response);
+
+        // 1. 取得原始陣列資料
+        const allAccounts = response;
+
+        // 2. 新增過濾邏輯：只保留 isLiability 為 false (即 0) 的帳戶
+        const savingAccounts = allAccounts.filter(a => a.isLiability === false || a.isLiability === 0);
+
+        const select = document.getElementById('goalAccount');
+        if (!select) return;
+
+        // 3. 清空並重新填充過濾後的選項
+        let options = '<option value="" disabled selected>請選擇存款帳戶</option>';
+
+        options += savingAccounts.map(a =>
+          `<option value="${a.accountId}">#${a.accountId} ${a.accountName} (餘額: ${a.balance})</option>`
+        ).join('');
+
+        // 加入新增按鈕
+        options += `<option value="NEW_ACCOUNT_TRIGGER" style="color: #e8643a; font-weight: bold; background: #fff5f2;">+ 新增存款帳戶...</option>`;
+
+        select.innerHTML = options;
+      } catch (ex) {
+        console.error("載入存款帳戶失敗", ex);
+      }
+    }
+    /* ---------- 全份 init 函式 (無省略) ---------- */
+    async function init() {
+      console.log("1. init 函式開始執行");
+
+      /* ---------- 登入狀態攔截檢查 ---------- */
+      try {
+        // 嘗試呼叫一個需要權限的 API 來確認登入狀態
+        await WalletPet.accountApi.list();
+      } catch (authErr) {
+        console.error("驗證失敗，使用者未登入:", authErr);
+        alert("您尚未登入，請先登入系統。");
+        window.location.href = "login.html"; // 請確保與你的登入頁檔名一致
+        return; // 強制結束函式，不執行後續邏輯
+      }
+
+      /* ---------- 以下為你原始的邏輯，完全保留 ---------- */
+      // 預設日期
+      const today = fmt.today();
+      const goalStartInput = document.getElementById('goalStart');
+      const bdStartInput = document.getElementById('bdStart');
+      if (goalStartInput) goalStartInput.value = today;
+      if (bdStartInput) bdStartInput.value = today;
+
+      try {
+        // --- 抓取各項資料 (僅在分類這邊加上 .data 判斷，確保抓到真正的陣列) ---
+        try {
+          const resAcc = await WalletPet.accountApi.list();
+          state.accounts = resAcc.data || resAcc;
+        } catch { state.accounts = demoAccounts; }
+
+        try {
+          const resCat = await WalletPet.categoryApi.list();
+          // 關鍵點：有些後端會包在 .data 裡，有些直接給陣列，這樣寫最保險
+          state.categories = resCat.data || resCat;
+        } catch { state.categories = demoCategories; }
+
+        try {
+          const resGoal = await WalletPet.savingGoalApi.list();
+          state.goals = resGoal.data || resGoal;
+        } catch { state.goals = demoGoals; }
+
+        try {
+          const resBud = await WalletPet.budgetApi.list();
+          state.budgets = resBud.data || resBud;
+        } catch { state.budgets = demoBudgets; }
+
+        // --- 執行填充與渲染 (這部分維持你的原始順序) ---
+        populateAccountSelect();
+
+        console.log("2. 準備執行 loadSavingAccountsOnly");
+        // 這裡是你之前修很久的地方，絕對不動它
+        await loadSavingAccountsOnly();
+        console.log("3. loadSavingAccountsOnly 執行完畢");
+
+        // 更新預算的分類選單與渲染
+        populateBudgetCategorySelect();
+        renderGoals();
+        renderBudgets();
+
+      } catch (err) {
+        console.error("init 執行過程中發生錯誤:", err);
+      }
+    }
+    ['goalTarget', 'bdAmount'].forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
+
+      // 當使用者輸入完離開 (blur) 或按回車時觸發
+      input.addEventListener('change', function () {
+        const val = parseInt(this.value, 10);
+        // 如果輸入小於 1 或根本不是數字，強制變回 1
+        if (isNaN(val) || val < 1) {
+          this.value = 1;
+          console.log(`[防呆] ${id} 的值不可小於 1，已自動修正為 1`);
+        }
+      });
+    });
+
+
+    // 啟動點：確保執行 init
+    init();
+
+  </script>
+</body>
+
+</html>
